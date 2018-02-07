@@ -10,6 +10,29 @@
 #include <arpa/inet.h>	// "in_addr_t"
 #include "myftp.h"
 
+void list_request(int fd){
+	// LIST_REQUEST
+	struct message_s *header = createHeader(LIST_REQUEST,HEADER_SIZE);
+	sendPacket(fd, header, " ", 0);
+	free(header);
+
+	// LIST_REPLY
+	char *header_buffer = malloc(sizeof(char)*HEADER_SIZE);
+	recv(fd,header_buffer,HEADER_SIZE,0);
+	header = decodeHeader(header_buffer);
+
+	int payload_Size = header->length - HEADER_SIZE;
+	char *payload = malloc(sizeof(char)*payload_Size);
+	int count = recv(fd,payload,payload_Size,0);
+	if(count != payload_Size)
+	{
+		perror("Error during deciphering payload...");
+		exit(1);
+	}
+
+	printf("%s", payload);
+}
+
 void put_sendFileName(int fd, char *fileName){
 	// PUT_REQUEST
 	struct message_s *header = createHeader(PUT_REQUEST,HEADER_SIZE + strlen(fileName));
@@ -40,8 +63,7 @@ void put_sendFile(int fd, char *fileName){
 
 void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 {
-	int buf[2];
-	int fd,i;
+	int fd;
 	int choice;
 	struct sockaddr_in addr;
 	unsigned int addrlen = sizeof(struct sockaddr_in);
@@ -70,9 +92,9 @@ void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 
 	// CMD switch
 	switch(cmd) {
-		// case 3:	
-		// 	put_sendFile(fd,src);
-		// 	break;
+		case 1:	
+			list_request(fd);
+			break;
 
 		case 3:	
 			if(!checkFileExsist(src)){

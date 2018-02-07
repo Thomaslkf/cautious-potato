@@ -11,6 +11,14 @@
 #include <sys/wait.h>
 #include "myftp.h"
 
+void list_reply(int fd, char *list){
+	// LIST_REQUEST
+	struct message_s *header = createHeader(PUT_REQUEST,HEADER_SIZE + strlen(list));
+	printf("Sending Directory to Client...\n");
+	sendPacket(fd, header, list, strlen(list));
+	free(header);
+}
+
 void put_storeFile(int fd, char *fileName){
 	char *header_buffer = malloc(sizeof(char)*HEADER_SIZE);
 	struct message_s *header;
@@ -100,7 +108,7 @@ void child_function(int accept_fd) {
 		
 		case LIST_REQUEST :	
 			list = listFile();
-			// printf("%s", list);
+			list_reply(accept_fd,list);
 			break;
 	}
 
@@ -116,8 +124,9 @@ void main_loop(unsigned short port)
 	unsigned int addrlen = sizeof(struct sockaddr_in);
 
 	fd = socket(AF_INET, SOCK_STREAM, 0);		// Create a TCP Socket
-
-	if(fd == -1)
+	long val = 1;
+	val = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(long));
+	if(fd == -1 || val == -1)
 	{
 		perror("socket()");
 		exit(1);

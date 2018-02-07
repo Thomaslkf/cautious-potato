@@ -150,7 +150,7 @@ char *listFile(){
 			strcpy(fileName,"No file found in the directory.\n");
 			return fileName;
 		} else {
-			char *result = malloc(sizeof(char)*strlen(fileName));
+			char *result = malloc(sizeof(char)*strlen(fileName)+1);
 			memcpy(result,fileName,strlen(fileName));
 			return result;
 		}
