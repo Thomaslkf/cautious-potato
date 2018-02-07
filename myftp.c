@@ -41,6 +41,7 @@ char *generatePacket(struct message_s *header, char* payload, int packetSize){
 	return packet;
 }
 
+// not used
 void *explodePacket(char* packet, struct message_s **header_src, char **payload){
 	// Explode Header
 	char *header_buffer = malloc(sizeof(char)*HEADER_SIZE);
@@ -87,7 +88,7 @@ char *readFileToByte(FILE *file){
 }
 
 
-int main(int argc, char **argv) {
+void test() {
 	FILE *file = fopen("./data/dummy","r");
 	char *payload = readFileToByte(file);
 
@@ -100,6 +101,10 @@ int main(int argc, char **argv) {
 
 	printf("%x\n", header_decoded->type);
 	printf("%s\n", payload_decoded);
-
-	exit(0);
 }
+
+// int main(int argc, char **argv) {
+// 	test();
+
+// 	exit(0);
+// }

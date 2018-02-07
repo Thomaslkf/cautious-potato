@@ -8,12 +8,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>	// "struct sockaddr_in"
 #include <arpa/inet.h>	// "in_addr_t"
+#include "myftp.h"
 
 
 void main_task(in_addr_t ip, unsigned short port)
 {
-	int buf;
-	int fd;
+	int buf[2];
+	int fd,i;
 	int choice;
 	struct sockaddr_in addr;
 	unsigned int addrlen = sizeof(struct sockaddr_in);
@@ -39,19 +40,16 @@ void main_task(in_addr_t ip, unsigned short port)
 		exit(1);
 	}
 
-	do {
-		printf("choice: (1) send nothing, or (2) send 4 bytes\n");
-		scanf("%d", &choice);
-	} while(choice != 1 && choice != 2);
+	FILE *file = fopen("./data/dummy","r");
+	int fs = getFileSize(file);
+	char *payload = readFileToByte(file);
 
-	if(choice == 2) {
-		buf = 0x12345678;	// The 4 bytes of data to be sent
-		buf = htonl(buf);	// htonl() is important. Will explain in tutorials and lectures
-		write(fd, &buf, sizeof(buf));	// sent the 4-byte data to the destination.
-		printf("Done\n");	// Tell the user that it is done.
-	}
-	else
-		printf("Sent nothing.\n");
+	struct message_s *header = createHeader(FILE_DATA,HEADER_SIZE + strlen(payload));
+	char *header_encoded = encodeHeader(header);
+
+	printf("FS: %d\n", fs);
+	send(fd,header_encoded,HEADER_SIZE,0);
+	send(fd,payload,fs,0);
 
 	close(fd);	// Time to shut up
 }

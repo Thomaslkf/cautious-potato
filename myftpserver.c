@@ -9,29 +9,35 @@
 #include <netinet/in.h>	// "struct sockaddr_in"
 #include <arpa/inet.h>	// "in_addr_t"
 #include <sys/wait.h>
+#include "myftp.h"
 
 void child_function(int accept_fd) {
-	int pid = getpid(), count, buf;
+	int pid = getpid(), count,i;
 
-	// Read from network, buf is 4 bytes.
-	// Since the opposite side sends 4 bytes of data,
-	// "count" should report 4 bytes.
-	count = read(accept_fd, &buf, sizeof(buf));
+	char *header_buffer = malloc(sizeof(char)*HEADER_SIZE);
+	struct message_s *header_decoded;
 
-	if(count == -1)
+	int payload_Size;
+	char *payload_decoded;
+	
+	// Receive Header 
+	count = recv(accept_fd,header_buffer,HEADER_SIZE,0);
+	if(count != HEADER_SIZE)
 	{
-		perror("reading...");
+		perror("Error during deciphering header...");
 		exit(1);
-	}
+	} 
+	header_decoded = decodeHeader(header_buffer);
+	//check protocol?
 
-	if(count == 0)		// nothing can be received.
-		printf("[PID:%d] Nothing\n", pid);
-	else {
-		// ntoh() is important. Will explain it in lectures and tutorials
-		buf = ntohl(buf);
-
-		// Print the 4 bytes of received data in Hex
-		printf("[PID:%d] result = %x\n", pid, buf);
+	// Receive Header 
+	payload_Size = header_decoded->length - HEADER_SIZE;
+	payload_decoded = malloc(sizeof(char)*payload_Size);
+	count = recv(accept_fd,payload_decoded,payload_Size,0);
+	if(count != payload_Size)
+	{
+		perror("Error during deciphering payload...");
+		exit(1);
 	}
 
 	close(accept_fd);	// Time to shut up.

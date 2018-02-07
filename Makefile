@@ -1,10 +1,10 @@
 CC = gcc
-LIB = 
+LIB = myftp.c
 
 all: server client
 
-server: myftpserver.c
+server: ${LIB} myftpserver.c
 		${CC} -o server myftpserver.c ${LIB}
 
-client:	myftpclient.c
+client:	${LIB} myftpclient.c
 		${CC} -o client myftpclient.c ${LIB} 

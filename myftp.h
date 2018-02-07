@@ -16,3 +16,11 @@ struct message_s {
 	unsigned int length; /* length (header + payload) (4 bytes) */
 } __attribute__ ((packed));
 
+struct message_s *createHeader(unsigned char type, unsigned int length);
+char *encodeHeader(struct message_s *header);
+struct message_s *decodeHeader(char* message);
+char *generatePacket(struct message_s *header, char* payload, int packetSize);
+void *explodePacket(char* packet, struct message_s **header_src, char **payload);
+int getFileSize(FILE *file);
+int *fragmentateFile(FILE *file, unsigned int size);
+char *readFileToByte(FILE *file);
