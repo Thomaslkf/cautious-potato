@@ -67,6 +67,10 @@ void child_function(int accept_fd) {
 	
 	// Receive Header 
 	count = recv(accept_fd,header_buffer,HEADER_SIZE,0);
+	if(count == 0){
+		printf("Client Disconnected\n");
+		exit(0);
+	}
 	if(count != HEADER_SIZE)
 	{
 		perror("Error during deciphering header...");
@@ -87,10 +91,16 @@ void child_function(int accept_fd) {
 		}
 	}
 
+	char *list;
 	switch(header->type) {
-		case PUT_REQUEST:	
+		case PUT_REQUEST :	
 			put_reply(accept_fd);
 			put_storeFile(accept_fd, payload);
+			break;
+		
+		case LIST_REQUEST :	
+			list = listFile();
+			// printf("%s", list);
 			break;
 	}
 

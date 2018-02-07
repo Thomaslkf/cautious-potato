@@ -1,7 +1,7 @@
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
 #include <sys/types.h>
 #include "myftp.h"
 
@@ -105,6 +105,59 @@ char *readFileToByte(FILE *file){
 	return buffer;
 }
 
+int checkFileExsist(char *rqFile) {
+	DIR *dir;
+	struct dirent *reader;
+	int isFind = 0;
+
+	if ((dir = opendir("./")) == NULL){
+		printf("error: directory can not opened.\n");
+		closedir(dir);
+		exit(1);
+	} else {
+		// printf("The file you want: %s\n", rqFile);
+		// printf("The following are the result: \n");
+		while (( reader = readdir(dir)) != NULL){
+			if(strcmp(reader->d_name,rqFile) == 0){
+				isFind = 1;
+				break;
+			}
+		}
+	}
+	closedir(dir);
+	return isFind;
+}
+
+char *listFile(){
+	DIR *dir;
+	struct dirent *reader;
+	int fileNumber = 0;
+	char *fileName;
+
+	if ((dir = opendir("./data/")) == NULL){
+		printf("error: directory can not opened.\n");
+	} else {
+		fileName = malloc(sizeof(char)*1024);
+		while (( reader = readdir(dir)) != NULL){
+			if((strcmp(reader->d_name,".") == 0) || ((strcmp(reader->d_name,"..") == 0)) ) continue;
+			strcat(fileName,reader->d_name);
+			strcat(fileName," \n");
+			fileNumber++;
+		}
+		closedir(dir);
+
+		if(fileNumber == 0){
+			strcpy(fileName,"No file found in the directory.\n");
+			return fileName;
+		} else {
+			char *result = malloc(sizeof(char)*strlen(fileName));
+			memcpy(result,fileName,strlen(fileName));
+			return result;
+		}
+		
+	}
+}
+
 /**
 // Network
 **/
@@ -139,28 +192,6 @@ void test() {
 	printf("%s\n", payload_decoded);
 }
 
-int checkFileExsist(){
-	DIR *dir;
-  	struct dirent *reader;
-  	char *requestFile = malloc(sizeof(char));
-  	int isFind = 0;
-	if ((dir = opendir("/")) == NULL){ //need to define the target directory
-    		perror("opendir() error");
-  	}
-  	else {
-    		printf("Which file do you want? ");
-    		scanf("%s",requestFile);
-    		printf("The file you want: %s\n", requestFile);
-    		while (( reader = readdir(dir)) != NULL){
-      			if(strcmp(reader->d_name,requestFile) == 0){
-	        		isFind = 1;
-	        		break;
-      			}
-		}
-	}
-    	closedir(dir);
-	return isFind;
-}
 // int main(int argc, char **argv) {
 // 	test();
 

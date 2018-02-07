@@ -70,8 +70,16 @@ void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 
 	// CMD switch
 	switch(cmd) {
+		// case 3:	
+		// 	put_sendFile(fd,src);
+		// 	break;
+
 		case 3:	
-			// check file
+			if(!checkFileExsist(src)){
+				printf("File Not Found\n");
+				close(fd);
+				exit(1);
+			}
 			put_sendFileName(fd,src);
 			put_sendFile(fd,src);
 			break;
