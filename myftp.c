@@ -3,8 +3,9 @@
 #include <string.h>
 #include "myftp.h"
 
-
-// Header Function
+/**
+/* Header Function
+**/
 struct message_s *createHeader(unsigned char type, unsigned int length){
 	struct message_s *header = malloc(sizeof(struct message_s));
 
@@ -29,7 +30,13 @@ struct message_s *decodeHeader(char* message){
 	return temp;
 }
 
-// Transfer function
+int hasPayload(unsigned char type){
+	return (type == 0xA2 || type == 0xB1 || type == 0xC1 || type == 0xFF);
+}
+
+/**
+/* Transfer function
+**/
 char *generatePacket(struct message_s *header, char* payload, int packetSize){
 	char *packet = malloc(sizeof(char)*packetSize);
 	char *header_buf = encodeHeader(header);
@@ -39,6 +46,13 @@ char *generatePacket(struct message_s *header, char* payload, int packetSize){
 	strcpy(packet,header_buf);
 
 	return packet;
+}
+
+void sendPacket(int fd, struct message_s *header, char *payload, int payload_size){
+	char *header_encoded = encodeHeader(header);
+
+	send(fd,header_encoded,HEADER_SIZE,0);
+	if(payload_size > 0) send(fd,payload,payload_size,0);
 }
 
 // not used
@@ -55,7 +69,9 @@ void *explodePacket(char* packet, struct message_s **header_src, char **payload)
 	strcpy(*payload,packet);
 }
 
+/**
 // File Operation
+**/
 int getFileSize(FILE *file){
 	fseek(file, 0L, SEEK_END);
 	int size = ftell(file);
@@ -87,6 +103,24 @@ char *readFileToByte(FILE *file){
 	return buffer;
 }
 
+/**
+// Network
+**/
+void bindAndListen(int fd, struct sockaddr_in *addr){
+	if(bind(fd, (struct sockaddr *) addr, sizeof(struct sockaddr_in)) == -1)
+	{
+		perror("bind()");
+		exit(1);
+	}
+
+	// Switch to listen mode by invoking listen()
+
+	if( listen(fd, 1024) == -1 )
+	{
+		perror("listen()");
+		exit(1);
+	}
+}
 
 void test() {
 	FILE *file = fopen("./data/dummy","r");

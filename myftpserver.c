@@ -11,14 +11,59 @@
 #include <sys/wait.h>
 #include "myftp.h"
 
-void child_function(int accept_fd) {
-	int pid = getpid(), count,i;
-
+void put_storeFile(int fd, char *fileName){
 	char *header_buffer = malloc(sizeof(char)*HEADER_SIZE);
-	struct message_s *header_decoded;
+	struct message_s *header;
 
 	int payload_Size;
-	char *payload_decoded;
+	char *payload;
+
+	// Receive Header 
+	int count = recv(fd,header_buffer,HEADER_SIZE,0);
+	if(count != HEADER_SIZE)
+	{
+		perror("Error during deciphering header...");
+		exit(1);
+	} 
+	header = decodeHeader(header_buffer);
+
+	// Receive payload
+	payload_Size = header->length - HEADER_SIZE;
+	payload = malloc(sizeof(char)*payload_Size);
+	count = recv(fd,payload,payload_Size,0);
+	if(count != payload_Size)
+	{
+		perror("Error during deciphering payload...");
+		exit(1);
+	}
+
+	// Store file
+	char *path = malloc(sizeof(char)*(strlen(fileName)+DATA_DIR_OFFSET));
+	strcat(path, "./data/");
+	strcat(path, fileName);
+
+
+	FILE *file = fopen(path,"w");
+	if(file == NULL) printf("Error Storing %s\n", fileName);
+	else printf("PUT %s in %s\n", fileName, path);
+	fwrite(payload,sizeof(char),strlen(payload),file);
+	fclose(file);
+	// printf("%s\n", payload);
+}
+
+void put_reply(int fd){
+	struct message_s *header = createHeader(PUT_REPLY,HEADER_SIZE);
+	sendPacket(fd, header, " ", 0);
+}
+
+void child_function(int accept_fd) {
+	int pid = getpid(), count;
+
+	char *header_buffer = malloc(sizeof(char)*HEADER_SIZE);
+	struct message_s *header;
+
+	int payload_Size;
+	char *payload;
 	
 	// Receive Header 
 	count = recv(accept_fd,header_buffer,HEADER_SIZE,0);
@@ -27,17 +72,26 @@ void child_function(int accept_fd) {
 		perror("Error during deciphering header...");
 		exit(1);
 	} 
-	header_decoded = decodeHeader(header_buffer);
+	header = decodeHeader(header_buffer);
 	//check protocol?
 
-	// Receive Header 
-	payload_Size = header_decoded->length - HEADER_SIZE;
-	payload_decoded = malloc(sizeof(char)*payload_Size);
-	count = recv(accept_fd,payload_decoded,payload_Size,0);
-	if(count != payload_Size)
-	{
-		perror("Error during deciphering payload...");
-		exit(1);
+	// Receive payload
+	if(hasPayload(header->type)){
+		payload_Size = header->length - HEADER_SIZE;
+		payload = malloc(sizeof(char)*payload_Size);
+		count = recv(accept_fd,payload,payload_Size,0);
+		if(count != payload_Size)
+		{
+			perror("Error during deciphering payload...");
+			exit(1);
+		}
+	}
+
+	switch(header->type) {
+		case PUT_REQUEST:	
+			put_reply(accept_fd);
+			put_storeFile(accept_fd, payload);
+			break;
 	}
 
 	close(accept_fd);	// Time to shut up.
@@ -100,8 +154,6 @@ void main_loop(unsigned short port)
 			child_function(accept_fd);
 
 		close(accept_fd);	// don't worry, child is still opening the socket.
-
-		// I don't handle zombie. Can you help me?
 
 	}	// End of infinite, accepting loop.
 }
