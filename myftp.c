@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
+#include <sys/types.h>
 #include "myftp.h"
 
 /**
@@ -137,6 +139,28 @@ void test() {
 	printf("%s\n", payload_decoded);
 }
 
+int checkFileExsist(){
+	DIR *dir;
+  	struct dirent *reader;
+  	char *requestFile = malloc(sizeof(char));
+  	int isFind = 0;
+	if ((dir = opendir("/")) == NULL){ //need to define the target directory
+    		perror("opendir() error");
+  	}
+  	else {
+    		printf("Which file do you want? ");
+    		scanf("%s",requestFile);
+    		printf("The file you want: %s\n", requestFile);
+    		while (( reader = readdir(dir)) != NULL){
+      			if(strcmp(reader->d_name,requestFile) == 0){
+	        		isFind = 1;
+	        		break;
+      			}
+		}
+	}
+    	closedir(dir);
+	return isFind;
+}
 // int main(int argc, char **argv) {
 // 	test();
 
