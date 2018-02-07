@@ -105,12 +105,12 @@ char *readFileToByte(FILE *file){
 	return buffer;
 }
 
-int checkFileExsist(char *rqFile) {
+int checkFileExsist(char *target_dir, char *rqFile) {
 	DIR *dir;
 	struct dirent *reader;
 	int isFind = 0;
 
-	if ((dir = opendir("./")) == NULL){
+	if ((dir = opendir(target_dir)) == NULL){
 		printf("error: directory can not opened.\n");
 		closedir(dir);
 		exit(1);

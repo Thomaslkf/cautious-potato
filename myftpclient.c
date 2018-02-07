@@ -10,6 +10,52 @@
 #include <arpa/inet.h>	// "in_addr_t"
 #include "myftp.h"
 
+void get_request(int fd, char *fileName){
+	struct message_s *header = createHeader(GET_REQUEST,HEADER_SIZE + strlen(fileName));
+	sendPacket(fd, header, fileName, strlen(fileName));
+	free(header);
+
+	// GET_REPLY
+	char *header_buffer = malloc(sizeof(char)*HEADER_SIZE);
+	recv(fd,header_buffer,HEADER_SIZE,0);
+	header = decodeHeader(header_buffer);
+
+	if(header->type == GET_REPLY_EXIST){
+		// Receive Header 
+		int count = recv(fd,header_buffer,HEADER_SIZE,0);
+		if(count != HEADER_SIZE)
+		{
+			perror("Error during deciphering header...");
+			exit(1);
+		} 
+		header = decodeHeader(header_buffer);
+
+		// Receive payload
+		int payload_Size = header->length - HEADER_SIZE;
+		char *payload = malloc(sizeof(char)*payload_Size);
+		count = recv(fd,payload,payload_Size,0);
+		if(count != payload_Size)
+		{
+			perror("Error during deciphering payload...");
+			exit(1);
+		}
+
+		// Store file
+		char *path = malloc(sizeof(char)*(strlen(fileName)+DATA_DIR_OFFSET));
+		strcat(path, "./");
+		strcat(path, fileName);
+
+
+		FILE *file = fopen(path,"w");
+		if(file == NULL) printf("Error Storing %s\n", fileName);
+		else printf("GET %s in %s\n", fileName, path);
+		fwrite(payload,sizeof(char),strlen(payload),file);
+		fclose(file);
+	} else {
+		printf("Cannot find %s in server\n", fileName);
+	}
+}
+
 void list_request(int fd){
 	// LIST_REQUEST
 	struct message_s *header = createHeader(LIST_REQUEST,HEADER_SIZE);
@@ -47,7 +93,7 @@ void put_sendFileName(int fd, char *fileName){
 
 void put_sendFile(int fd, char *fileName){
 	// FILE_DATA
-	char path[strlen(fileName)+2];
+	char *path = malloc(sizeof(char)*(strlen(fileName) + LOCAL_DIR_OFFSET));
 	strcat(path,"./");
 	strcat(path,fileName);
 
@@ -56,9 +102,10 @@ void put_sendFile(int fd, char *fileName){
 	char *payload = readFileToByte(file);
 	fclose(file);
 
-	struct message_s *header = createHeader(PUT_REQUEST,HEADER_SIZE + fs);
+	struct message_s *header = createHeader(FILE_DATA,HEADER_SIZE + fs);
 	sendPacket(fd, header, payload, fs);
 	free(header);
+	free(path);
 }
 
 void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
@@ -95,9 +142,11 @@ void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 		case 1:	
 			list_request(fd);
 			break;
-
+		case 2:	
+			get_request(fd,src);
+			break;
 		case 3:	
-			if(!checkFileExsist(src)){
+			if(!checkFileExsist("./",src)){
 				printf("File Not Found\n");
 				close(fd);
 				exit(1);
@@ -117,7 +166,7 @@ int main(int argc, char **argv)
 
 	if(argc < 4)
 	{
-		fprintf(stderr, "Usage: %s [IP address] [port]\n", argv[0]);
+		fprintf(stderr, "Usage: %s [IP address] [port] [list|get|put] [file]\n", argv[0]);
 		exit(1);
 	}
 
