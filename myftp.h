@@ -7,6 +7,8 @@
 #define PUT_REPLY 0xC2
 #define FILE_DATA 0xFF
 
+#define HEADER_SIZE 10
+
 // Header Stucture
 struct message_s {
 	unsigned char protocol[5]; /* protocol string (5 bytes) */
