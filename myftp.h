@@ -45,7 +45,3 @@ void bindAndListen(int fd, struct sockaddr_in *addr);
 int getFileSize(FILE *file);
 int *fragmentateFile(FILE *file, unsigned int size);
 char *readFileToByte(FILE *file);
-// int checkFileExsist(char *target_dir, char *rqFile);
-// char *listFile();
-
-void test();
