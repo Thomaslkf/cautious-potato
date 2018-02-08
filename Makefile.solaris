@@ -8,3 +8,5 @@ server: ${LIB} myftpserver.c
 
 client:	${LIB} myftpclient.c
 		${CC} -o client myftpclient.c ${LIB} 
+		
+clean: rm server client 
