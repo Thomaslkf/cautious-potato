@@ -94,6 +94,7 @@ void put_sendFileName(int fd, char *fileName){
 void put_sendFile(int fd, char *fileName){
 	// FILE_DATA
 	char *path = malloc(sizeof(char)*(strlen(fileName) + LOCAL_DIR_OFFSET));
+	memset(path,0,sizeof(char)*(strlen(fileName) + LOCAL_DIR_OFFSET));
 	strcat(path,"./");
 	strcat(path,fileName);
 
@@ -103,7 +104,11 @@ void put_sendFile(int fd, char *fileName){
 	fclose(file);
 
 	struct message_s *header = createHeader(FILE_DATA,HEADER_SIZE + fs);
+	printf("Sending %s to server...\n", fileName);
 	sendPacket(fd, header, payload, fs);
+	printf("Done\n");
+
+	free(payload);
 	free(header);
 	free(path);
 }

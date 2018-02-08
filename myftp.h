@@ -14,12 +14,20 @@
 #define DATA_DIR_OFFSET 7
 #define LOCAL_DIR_OFFSET 2
 
+#define MAX_LISTEN 1024
+
 // Header Stucture
 struct message_s {
 	unsigned char protocol[5]; /* protocol string (5 bytes) */
 	unsigned char type; /* type (1 byte) */
 	unsigned int length; /* length (header + payload) (4 bytes) */
 } __attribute__ ((packed));
+
+struct thread_data {
+	int fd;
+	int thread_id;
+	int in_use;
+};
 
 struct message_s *createHeader(unsigned char type, unsigned int length);
 char *encodeHeader(struct message_s *header);

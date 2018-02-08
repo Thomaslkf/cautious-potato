@@ -8,8 +8,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>	// "struct sockaddr_in"
 #include <arpa/inet.h>	// "in_addr_t"
+#include <pthread.h>
 #include <sys/wait.h>
 #include "myftp.h"
+
+struct thread_data thread_ava[MAX_LISTEN];
 
 void get_reply(int fd, char *fileName){
 	// GET_REQUEST
@@ -47,7 +50,7 @@ void get_reply(int fd, char *fileName){
 void list_reply(int fd, char *list){
 	// LIST_REQUEST
 	struct message_s *header = createHeader(LIST_REPLY,HEADER_SIZE + strlen(list));
-	printf("Sending Directory to Client...\n");
+	printf("Replying Directory to Client...\n");
 	sendPacket(fd, header, list, strlen(list));
 	free(header);
 }
@@ -85,6 +88,10 @@ void put_storeFile(int fd, char *fileName){
 	if(file == NULL) printf("Error Storing %s\n", fileName);
 	else printf("PUT %s in %s\n", fileName, path);
 	fwrite(payload,sizeof(char),strlen(payload),file);
+
+	free(header_buffer);
+	free(path);
+	free(payload);
 	fclose(file);
 	// printf("%s\n", payload);
 }
@@ -94,8 +101,10 @@ void put_reply(int fd){
 	sendPacket(fd, header, " ", 0);
 }
 
-void child_function(int accept_fd) {
-	int pid = getpid(), count;
+void *child_function(void *args) {
+	int thread_num = *(int *)args;
+	int count;
+	int accept_fd = thread_ava[thread_num].fd;
 
 	char *header_buffer = malloc(sizeof(char)*HEADER_SIZE);
 	struct message_s *header;
@@ -107,12 +116,14 @@ void child_function(int accept_fd) {
 	count = recv(accept_fd,header_buffer,HEADER_SIZE,0);
 	if(count == 0){
 		printf("Client Disconnected\n");
-		exit(0);
+		thread_ava[thread_num].in_use = 0;
+  		pthread_exit(NULL);
 	}
 	if(count != HEADER_SIZE)
 	{
 		perror("Error during deciphering header...");
-		exit(1);
+		thread_ava[thread_num].in_use = 0;
+  		pthread_exit(NULL);
 	} 
 	header = decodeHeader(header_buffer);
 	//check protocol?
@@ -125,7 +136,8 @@ void child_function(int accept_fd) {
 		if(count != payload_Size)
 		{
 			perror("Error during deciphering payload...");
-			exit(1);
+			thread_ava[thread_num].in_use = 0;
+  			pthread_exit(NULL);
 		}
 	}
 
@@ -146,13 +158,15 @@ void child_function(int accept_fd) {
 	}
 
 	close(accept_fd);	// Time to shut up.
-	exit(0);
+	free(header);
+	thread_ava[thread_num].in_use = 0;
+  	pthread_exit(NULL);
 }
 
 
 void main_loop(unsigned short port)
 {
-	int fd, accept_fd, client_count, pid = getpid();
+	int fd, accept_fd, client_count, i;
 	struct sockaddr_in addr, tmp_addr;
 	unsigned int addrlen = sizeof(struct sockaddr_in);
 
@@ -166,23 +180,20 @@ void main_loop(unsigned short port)
 	}
 
 	// 4 lines below: setting up the port for the listening socket
-
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(port);
 
 	// After the setup has been done, invoke bind()
-
 	if(bind(fd, (struct sockaddr *) &addr, sizeof(addr)) == -1)
 	{
 		perror("bind()");
 		exit(1);
 	}
-
 	// Switch to listen mode by invoking listen()
 
-	if( listen(fd, 1024) == -1 )
+	if( listen(fd, MAX_LISTEN) == -1 )
 	{
 		perror("listen()");
 		exit(1);
@@ -191,6 +202,16 @@ void main_loop(unsigned short port)
 	printf("[To stop the server: press Ctrl + C]\n");
 
 	client_count = 0;
+  	pthread_t thread[MAX_LISTEN];
+	pthread_mutex_t mutex;
+  	pthread_mutex_init(&mutex, NULL);
+
+  	for(i=0;i<MAX_LISTEN;i++){
+  		thread_ava[i].thread_id = i;
+  		thread_ava[i].fd = 0;
+  		thread_ava[i].in_use = 0;
+  	}
+
 	while(1) {
 		// Accept one client
 		if( (accept_fd = accept(fd, (struct sockaddr *) &tmp_addr, &addrlen)) == -1)
@@ -198,14 +219,21 @@ void main_loop(unsigned short port)
 			perror("accept()");
 			exit(1);
 		}
-
+		i = (i + 1) % MAX_LISTEN;
 		client_count++;
-		printf("[Mother Process:%d] Connection count = %d\n", pid, client_count);
+		printf("[Mother Process] Connection count = %d\n", client_count);
 
-		if(!fork())
-			child_function(accept_fd);
+    	pthread_mutex_lock(&mutex);
+		while(thread_ava[i].in_use)	i = (i + 1) % 1024;
+		thread_ava[i].in_use = 1;		
+		thread_ava[i].fd = accept_fd;	
+		pthread_create(&thread[i], NULL, child_function, &(thread_ava[i].thread_id));
+		// if(!fork())
+		// 	child_function(accept_fd);
+    	pthread_mutex_unlock(&mutex);
 
-		close(accept_fd);	// don't worry, child is still opening the socket.
+		// close(accept_fd);	// don't worry, child is still opening the socket.
+		// NOT FOR pthread mate
 
 	}	// End of infinite, accepting loop.
 }

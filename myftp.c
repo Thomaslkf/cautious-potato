@@ -26,8 +26,7 @@ char *encodeHeader(struct message_s *header){
 }
 
 struct message_s *decodeHeader(char* message){
-	struct message_s *temp = malloc(sizeof(struct message_s));
-	temp = (struct message_s*)message;
+	struct message_s *temp = (struct message_s*)message;
 
 	return temp;
 }
@@ -152,6 +151,8 @@ char *listFile(){
 		} else {
 			char *result = malloc(sizeof(char)*strlen(fileName)+1);
 			memcpy(result,fileName,strlen(fileName));
+
+			free(fileName);
 			return result;
 		}
 		
