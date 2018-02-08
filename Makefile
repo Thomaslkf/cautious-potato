@@ -1,6 +1,3 @@
-CC = gcc
-LIB = myftp.c -lpthread
-
 all: 
 	@if [ "`uname -s`" = "Linux" ] ; then \
 		make -f Makefile.linux ; \
