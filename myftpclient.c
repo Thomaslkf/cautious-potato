@@ -124,7 +124,7 @@ void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 	unsigned int addrlen = sizeof(struct sockaddr_in);
 	FILE *file;
 
-	fd = socket(AF_INET, SOCK_STREAM, 0);	// Create a TCP socket
+	fd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(fd == -1)
 	{
@@ -132,14 +132,12 @@ void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 		exit(1);
 	}
 
-	// Below 4 lines: Set up the destination with IP address and port number.
-
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = ip;
 	addr.sin_port = htons(port);
 
-	if( connect(fd, (struct sockaddr *) &addr, addrlen) == -1 )		// connect to the destintation
+	if( connect(fd, (struct sockaddr *) &addr, addrlen) == -1 )
 	{
 		perror("connect()");
 		exit(1);
@@ -163,7 +161,7 @@ void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 			put_sendFile(fd,src);
 			break;
 	}
-	close(fd);	// Time to shut up
+	close(fd);
 }
 
 int main(int argc, char **argv)

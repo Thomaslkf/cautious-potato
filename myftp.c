@@ -123,21 +123,6 @@ int getFileSize(FILE *file){
 	return size;
 }
 
-// Should send whole file at once, maybe use readFileToByte()
-int *fragmentateFile(FILE *file, unsigned int size){
-	int fs = getFileSize(file);
-	int dimension = fs / size + (fs >= size && fs % size != 0);
-	int i,j;
-
-	int *list = calloc(sizeof(int)*dimension,sizeof(int));
-	for(i=0;i<dimension;i++){
-		fread(&list[i], 1, size, file);
-		list[i]=ntohl(list[i]);
-	}
-
-	return list;
-}
-
 char *readFileToByte(FILE *file){
 	int fs = getFileSize(file);
 	char *buffer = malloc(sizeof(char)*fs);
@@ -145,34 +130,3 @@ char *readFileToByte(FILE *file){
 
 	return buffer;
 }
-
-// int checkFileExsist(char *target_dir, char *rqFile) {
-// 	DIR *dir;
-// 	struct dirent *reader;
-// 	int isFind = 0;
-
-// 	if ((dir = opendir(target_dir)) == NULL){
-// 		printf("error: directory can not opened.\n");
-// 		closedir(dir);
-// 		exit(1);
-// 	} else {
-// 		// printf("The file you want: %s\n", rqFile);
-// 		// printf("The following are the result: \n");
-// 		while (( reader = readdir(dir)) != NULL){
-// 			if(strcmp(reader->d_name,rqFile) == 0){
-// 				isFind = 1;
-// 				break;
-// 			}
-// 		}
-// 	}
-// 	closedir(dir);
-// 	return isFind;
-// }
-
-// char *listFile(){
-// 	DIR *dir;
-// 	struct dirent *reader;
-// 	int fileNumber = 0;
-// 	char *fileName;
-
-// 	if ((dir = opendir("./data/"))

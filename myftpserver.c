@@ -77,11 +77,8 @@ void put_storeFile(int fd, char *fileName){
 
 	// Receive payload
 	int payload_Size = header->length - HEADER_SIZE;
-	// printf("File Size: %d\n", payload_Size);
 	char *payload = malloc(sizeof(char)*payload_Size);
-	// printf("located\n");
 	count = recvn(fd,payload,payload_Size);
-	// printf("Recieved: %d\n", count);
 	if(count != payload_Size)
 	{
 		perror("Error during deciphering payload...");
@@ -89,7 +86,6 @@ void put_storeFile(int fd, char *fileName){
 	}
 
 	// Store file
-	// printf("FILE NAME B4 %s\n", fileName);
 	char *path = calloc(sizeof(char)*(strlen(fileName) + DATA_DIR_OFFSET) + 1,1);
 	strcat(path, "./data/");
 	strcat(path, fileName);
@@ -103,7 +99,6 @@ void put_storeFile(int fd, char *fileName){
 	free(path);
 	free(payload);
 	fclose(file);
-	// printf("%s\n", payload);
 }
 
 void put_reply(int fd){
@@ -136,7 +131,6 @@ void *child_function(void *args) {
   		pthread_exit(NULL);
 	} 
 	header = decodeHeader(header_buffer);
-	//check protocol?
 
 	// Receive payload
 	if(hasPayload(header->type)){
@@ -151,7 +145,6 @@ void *child_function(void *args) {
 			thread_ava[thread_num].in_use = 0;
   			pthread_exit(NULL);
 		}
-		// printf("PAYLOAD %s\n", payload);
 	}
 
 	char *list;
@@ -162,7 +155,6 @@ void *child_function(void *args) {
 			break;
 		case GET_REQUEST :	
 			get_reply(accept_fd, payload);
-			// get_storeFile(accept_fd, payload);
 			break;
 		case LIST_REQUEST :	
 			list = listFile();
@@ -170,9 +162,8 @@ void *child_function(void *args) {
 			break;
 	}
 
-	close(accept_fd);	// Time to shut up.
+	close(accept_fd);
 	free(header);
-	// free(payload);
 	thread_ava[thread_num].in_use = 0;
   	pthread_exit(NULL);
 }
@@ -184,7 +175,7 @@ void main_loop(unsigned short port)
 	struct sockaddr_in addr, tmp_addr;
 	unsigned int addrlen = sizeof(struct sockaddr_in);
 
-	fd = socket(AF_INET, SOCK_STREAM, 0);		// Create a TCP Socket
+	fd = socket(AF_INET, SOCK_STREAM, 0);
 	long val = 1;
 	val = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(long));
 	if(fd == -1 || val == -1)
@@ -193,19 +184,16 @@ void main_loop(unsigned short port)
 		exit(1);
 	}
 
-	// 4 lines below: setting up the port for the listening socket
 	memset(&addr, 0, sizeof(struct sockaddr_in));
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(port);
 
-	// After the setup has been done, invoke bind()
 	if(bind(fd, (struct sockaddr *) &addr, sizeof(addr)) == -1)
 	{
 		perror("bind()");
 		exit(1);
 	}
-	// Switch to listen mode by invoking listen()
 
 	if( listen(fd, MAX_LISTEN) == -1 )
 	{
@@ -227,7 +215,6 @@ void main_loop(unsigned short port)
   	}
 
 	while(1) {
-		// Accept one client
 		if( (accept_fd = accept(fd, (struct sockaddr *) &tmp_addr, &addrlen)) == -1)
 		{
 			perror("accept()");
@@ -242,14 +229,9 @@ void main_loop(unsigned short port)
 		thread_ava[i].in_use = 1;		
 		thread_ava[i].fd = accept_fd;	
 		pthread_create(&thread[i], NULL, child_function, &(thread_ava[i].thread_id));
-		// if(!fork())
-		// 	child_function(accept_fd);
     	pthread_mutex_unlock(&mutex);
 
-		// close(accept_fd);	// don't worry, child is still opening the socket.
-		// NOT FOR pthread mate
-
-	}	// End of infinite, accepting loop.
+	}
 }
 
 int main(int argc, char **argv)
@@ -268,7 +250,6 @@ int main(int argc, char **argv)
 	struct utsname unameData;
   	uname(&unameData);
   	is_SunOS = strcmp(unameData.sysname, "SunOS") == 0;
-  	// printf("OS %d\n", is_SunOS);
 
 	main_loop(port);
 
