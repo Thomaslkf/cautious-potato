@@ -1,14 +1,18 @@
+#include <arpa/inet.h>	// "in_addr_t"
+#include <netinet/in.h>	// "struct sockaddr_in"
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <signal.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>	// "struct sockaddr_in"
-#include <arpa/inet.h>	// "in_addr_t"
+#include <sys/utsname.h>
+#include <unistd.h>
+
 #include "myftp.h"
+#include "dir.h"
+#include "dir_SunOS.h"
 
 void get_request(int fd, char *fileName){
 	struct message_s *header = createHeader(GET_REQUEST,HEADER_SIZE + strlen(fileName));
@@ -81,8 +85,8 @@ void list_request(int fd){
 
 void put_sendFileName(int fd, char *fileName){
 	// PUT_REQUEST
-	struct message_s *header = createHeader(PUT_REQUEST,HEADER_SIZE + strlen(fileName));
-	sendPacket(fd, header, fileName, strlen(fileName));
+	struct message_s *header = createHeader(PUT_REQUEST,HEADER_SIZE + strlen(fileName) + 1);
+	sendPacket(fd, header, fileName, strlen(fileName)+1);
 	free(header);
 
 	// PUT_REPLY
@@ -93,8 +97,7 @@ void put_sendFileName(int fd, char *fileName){
 
 void put_sendFile(int fd, char *fileName){
 	// FILE_DATA
-	char *path = malloc(sizeof(char)*(strlen(fileName) + LOCAL_DIR_OFFSET));
-	memset(path,0,sizeof(char)*(strlen(fileName) + LOCAL_DIR_OFFSET));
+	char *path = calloc(sizeof(char)*(strlen(fileName) + LOCAL_DIR_OFFSET), 1);
 	strcat(path,"./");
 	strcat(path,fileName);
 
@@ -151,7 +154,7 @@ void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 			get_request(fd,src);
 			break;
 		case 3:	
-			if(!checkFileExsist("./",src)){
+			if(!checkFileExsist("./",src) && 0){
 				printf("File Not Found\n");
 				close(fd);
 				exit(1);
@@ -182,6 +185,11 @@ int main(int argc, char **argv)
 	}
 	port = atoi(argv[2]);
 	
+	// Detect OS
+	struct utsname unameData;
+  	uname(&unameData);
+  	is_SunOS = strcmp(unameData.sysname, "SunOS") == 0;
+
 	// CMD switch
 	if(!strcmp(argv[3],"list")) cmd = 1;
 	if(!strcmp(argv[3],"get")) cmd = 2;

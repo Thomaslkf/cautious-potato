@@ -1,10 +1,10 @@
 CC = gcc
-LIB = myftp.c -lpthread
+LIB = myftp.c dir.c -lpthread
 
 all: server client
 
-server: ${LIB} myftpserver.c
+server: myftp.c myftpserver.c
 		${CC} -o server myftpserver.c ${LIB}
 
-client:	${LIB} myftpclient.c
+client:	myftp.c myftpclient.c
 		${CC} -o client myftpclient.c ${LIB} 

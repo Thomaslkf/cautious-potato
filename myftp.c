@@ -104,60 +104,60 @@ char *readFileToByte(FILE *file){
 	return buffer;
 }
 
-int checkFileExsist(char *target_dir, char *rqFile) {
-	DIR *dir;
-	struct dirent *reader;
-	int isFind = 0;
+// int checkFileExsist(char *target_dir, char *rqFile) {
+// 	DIR *dir;
+// 	struct dirent *reader;
+// 	int isFind = 0;
 
-	if ((dir = opendir(target_dir)) == NULL){
-		printf("error: directory can not opened.\n");
-		closedir(dir);
-		exit(1);
-	} else {
-		// printf("The file you want: %s\n", rqFile);
-		// printf("The following are the result: \n");
-		while (( reader = readdir(dir)) != NULL){
-			if(strcmp(reader->d_name,rqFile) == 0){
-				isFind = 1;
-				break;
-			}
-		}
-	}
-	closedir(dir);
-	return isFind;
-}
+// 	if ((dir = opendir(target_dir)) == NULL){
+// 		printf("error: directory can not opened.\n");
+// 		closedir(dir);
+// 		exit(1);
+// 	} else {
+// 		// printf("The file you want: %s\n", rqFile);
+// 		// printf("The following are the result: \n");
+// 		while (( reader = readdir(dir)) != NULL){
+// 			if(strcmp(reader->d_name,rqFile) == 0){
+// 				isFind = 1;
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	closedir(dir);
+// 	return isFind;
+// }
 
-char *listFile(){
-	DIR *dir;
-	struct dirent *reader;
-	int fileNumber = 0;
-	char *fileName;
+// char *listFile(){
+// 	DIR *dir;
+// 	struct dirent *reader;
+// 	int fileNumber = 0;
+// 	char *fileName;
 
-	if ((dir = opendir("./data/")) == NULL){
-		printf("error: directory can not opened.\n");
-	} else {
-		fileName = malloc(sizeof(char)*1024);
-		while (( reader = readdir(dir)) != NULL){
-			if((strcmp(reader->d_name,".") == 0) || ((strcmp(reader->d_name,"..") == 0)) ) continue;
-			strcat(fileName,reader->d_name);
-			strcat(fileName," \n");
-			fileNumber++;
-		}
-		closedir(dir);
+// 	if ((dir = opendir("./data/")) == NULL){
+// 		printf("error: directory can not opened.\n");
+// 	} else {
+// 		fileName = calloc(sizeof(char)*1024,1);
+// 		while (( reader = readdir(dir)) != NULL){
+// 			if((strcmp(reader->d_name,".") == 0) || ((strcmp(reader->d_name,"..") == 0)) ) continue;
+// 			strcat(fileName,reader->d_name);
+// 			strcat(fileName," \n");
+// 			fileNumber++;
+// 		}
+// 		closedir(dir);
 
-		if(fileNumber == 0){
-			strcpy(fileName,"No file found in the directory.\n");
-			return fileName;
-		} else {
-			char *result = malloc(sizeof(char)*strlen(fileName)+1);
-			memcpy(result,fileName,strlen(fileName));
+// 		if(fileNumber == 0){
+// 			strcpy(fileName,"No file found in the directory.\n");
+// 			return fileName;
+// 		} else {
+// 			char *result = malloc(sizeof(char)*strlen(fileName)+1);
+// 			memcpy(result,fileName,strlen(fileName));
 
-			free(fileName);
-			return result;
-		}
+// 			free(fileName);
+// 			return result;
+// 		}
 		
-	}
-}
+// 	}
+// }
 
 /**
 // Network
@@ -178,20 +178,22 @@ void bindAndListen(int fd, struct sockaddr_in *addr){
 	}
 }
 
-void test() {
-	FILE *file = fopen("./data/dummy","r");
-	char *payload = readFileToByte(file);
+// void test() {
 
-	struct message_s *header = createHeader(FILE_DATA,HEADER_SIZE + strlen(payload));
-	char *packet = generatePacket(header, payload, header->length);
+//   DIR *dp;
+//   struct dirent64 *ep;
 
-	struct message_s *header_decoded;
-	char *payload_decoded;
-	explodePacket(packet,&header_decoded,&payload_decoded);
+//   dp = opendir ("./");
+//   if (dp != NULL)
+//     {
+//       while (ep = readdir (dp))
+//         printf("%s\n", ep->d_name);
+//       (void) closedir (dp);
+//     }
+//   else
+//     perror ("Couldn't open the directory");
 
-	printf("%x\n", header_decoded->type);
-	printf("%s\n", payload_decoded);
-}
+// }
 
 // int main(int argc, char **argv) {
 // 	test();

@@ -1,16 +1,20 @@
+#include <arpa/inet.h>	// "in_addr_t"
+#include <netinet/in.h>	// "struct sockaddr_in"
+#include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <signal.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>	// "struct sockaddr_in"
-#include <arpa/inet.h>	// "in_addr_t"
-#include <pthread.h>
+#include <sys/utsname.h>
 #include <sys/wait.h>
+#include <unistd.h>
+
 #include "myftp.h"
+#include "dir.h"
+#include "dir_SunOS.h"
 
 struct thread_data thread_ava[MAX_LISTEN];
 
@@ -25,12 +29,15 @@ void get_reply(int fd, char *fileName){
 
 		// FILE_DATA
 		printf("Sending File to Client...\n");
-		char *path = malloc(sizeof(char)*(strlen(fileName) + DATA_DIR_OFFSET));
+		char *path = calloc(sizeof(char)*(strlen(fileName) + DATA_DIR_OFFSET),1);
+		path[0] = '\0';
 		strcat(path,"./data/");
 		strcat(path,fileName);
+		// printf("PATH: %s", path);
 
 		FILE *file = fopen(path,"r");
 		int fs = getFileSize(file);
+
 		char *payload = readFileToByte(file);
 		fclose(file);
 
@@ -79,10 +86,10 @@ void put_storeFile(int fd, char *fileName){
 	}
 
 	// Store file
-	char *path = malloc(sizeof(char)*(strlen(fileName)+DATA_DIR_OFFSET));
+	// printf("FILE NAME B4 %s\n", fileName);
+	char *path = calloc(sizeof(char)*(strlen(fileName) + DATA_DIR_OFFSET) + 1,1);
 	strcat(path, "./data/");
 	strcat(path, fileName);
-
 
 	FILE *file = fopen(path,"w");
 	if(file == NULL) printf("Error Storing %s\n", fileName);
@@ -131,6 +138,7 @@ void *child_function(void *args) {
 	// Receive payload
 	if(hasPayload(header->type)){
 		payload_Size = header->length - HEADER_SIZE;
+		// printf("payload_Size %d\n",payload_Size);
 		payload = malloc(sizeof(char)*payload_Size);
 		count = recv(accept_fd,payload,payload_Size,0);
 		if(count != payload_Size)
@@ -139,6 +147,7 @@ void *child_function(void *args) {
 			thread_ava[thread_num].in_use = 0;
   			pthread_exit(NULL);
 		}
+		// printf("PAYLOAD %s\n", payload);
 	}
 
 	char *list;
@@ -249,6 +258,12 @@ int main(int argc, char **argv)
 	}
 
 	port = atoi(argv[1]);
+
+	// Detect OS
+	struct utsname unameData;
+  	uname(&unameData);
+  	is_SunOS = strcmp(unameData.sysname, "SunOS") == 0;
+  	// printf("OS %d\n", is_SunOS);
 
 	main_loop(port);
 

@@ -29,6 +29,8 @@ struct thread_data {
 	int in_use;
 };
 
+int is_SunOS;
+
 struct message_s *createHeader(unsigned char type, unsigned int length);
 char *encodeHeader(struct message_s *header);
 struct message_s *decodeHeader(char* message);
@@ -43,5 +45,7 @@ void bindAndListen(int fd, struct sockaddr_in *addr);
 int getFileSize(FILE *file);
 int *fragmentateFile(FILE *file, unsigned int size);
 char *readFileToByte(FILE *file);
-int checkFileExsist(char *target_dir, char *rqFile);
-char *listFile();
+// int checkFileExsist(char *target_dir, char *rqFile);
+// char *listFile();
+
+void test();

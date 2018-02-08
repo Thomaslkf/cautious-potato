@@ -1,10 +1,10 @@
 CC = gcc
-LIB = myftp.c -lsocket -lnsl -lpthread
+LIB = myftp.c dir_SunOS.c -lsocket -lnsl -lpthread
 
 all: server client
 
-server: ${LIB} myftpserver.c
-		${CC} -o server myftpserver.c ${LIB}
+server: myftp.c myftpserver.c
+		${CC} -o server myftpserver.c ${LIB} 
 
-client:	${LIB} myftpclient.c
-		${CC} -o client myftpclient.c ${LIB} 
+client:	myftp.c myftpclient.c
+		${CC} -o client myftpclient.c ${LIB}  
