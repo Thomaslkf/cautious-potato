@@ -15,8 +15,8 @@
 #include "dir_SunOS.h"
 
 void get_request(int fd, char *fileName){
-	struct message_s *header = createHeader(GET_REQUEST,HEADER_SIZE + strlen(fileName));
-	sendPacket(fd, header, fileName, strlen(fileName));
+	struct message_s *header = createHeader(GET_REQUEST,HEADER_SIZE + strlen(fileName) + 1);
+	sendPacket(fd, header, fileName, strlen(fileName) + 1);
 	free(header);
 
 	// GET_REPLY
@@ -37,7 +37,7 @@ void get_request(int fd, char *fileName){
 		// Receive payload
 		int payload_Size = header->length - HEADER_SIZE;
 		char *payload = malloc(sizeof(char)*payload_Size);
-		count = recv(fd,payload,payload_Size,0);
+		count = recvn(fd,payload,payload_Size);
 		if(count != payload_Size)
 		{
 			perror("Error during deciphering payload...");
@@ -86,7 +86,7 @@ void list_request(int fd){
 void put_sendFileName(int fd, char *fileName){
 	// PUT_REQUEST
 	struct message_s *header = createHeader(PUT_REQUEST,HEADER_SIZE + strlen(fileName) + 1);
-	sendPacket(fd, header, fileName, strlen(fileName)+1);
+	sendPacket(fd, header, fileName, strlen(fileName) + 1);
 	free(header);
 
 	// PUT_REPLY
@@ -108,7 +108,7 @@ void put_sendFile(int fd, char *fileName){
 
 	struct message_s *header = createHeader(FILE_DATA,HEADER_SIZE + fs);
 	printf("Sending %s to server...\n", fileName);
-	sendPacket(fd, header, payload, fs);
+	sendPacketWithFile(fd, header, payload, fs);
 	printf("Done\n");
 
 	free(payload);
@@ -154,7 +154,7 @@ void main_task(int cmd, in_addr_t ip, unsigned short port, char *src)
 			get_request(fd,src);
 			break;
 		case 3:	
-			if(!checkFileExsist("./",src) && 0){
+			if(!checkFileExsist("./",src)){
 				printf("File Not Found\n");
 				close(fd);
 				exit(1);

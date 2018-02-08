@@ -1,4 +1,5 @@
 #include <netinet/in.h>
+#include <stdlib.h>
 #include <arpa/inet.h>
 
 #define LIST_REQUEST 0xA1
@@ -39,9 +40,17 @@ int hasPayload(unsigned char type);
 char *generatePacket(struct message_s *header, char* payload, int packetSize);
 void *explodePacket(char* packet, struct message_s **header_src, char **payload);
 void sendPacket(int fd, struct message_s *header, char *payload, int payload_size);
+void sendPacketWithFile(int fd, struct message_s *header, char *payload, int payload_size);
+int sendn(int sd, void *buf, int buf_len);
+int recvn(int sd, void *buf, int buf_len);
+// int recvFile(int sd, FILE *buf, int buf_len);
 
 void bindAndListen(int fd, struct sockaddr_in *addr);
 
 int getFileSize(FILE *file);
 int *fragmentateFile(FILE *file, unsigned int size);
 char *readFileToByte(FILE *file);
+// int checkFileExsist(char *target_dir, char *rqFile);
+// char *listFile();
+
+void test();

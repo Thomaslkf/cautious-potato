@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include "myftp.h"
 
@@ -56,6 +58,12 @@ void sendPacket(int fd, struct message_s *header, char *payload, int payload_siz
 	if(payload_size > 0) send(fd,payload,payload_size,0);
 }
 
+void sendPacketWithFile(int fd, struct message_s *header, char *payload, int payload_size){
+	char *header_encoded = encodeHeader(header);
+	send(fd,header_encoded,HEADER_SIZE,0);
+	sendn(fd,payload,payload_size);
+}
+
 // not used
 void *explodePacket(char* packet, struct message_s **header_src, char **payload){
 	// Explode Header
@@ -68,6 +76,40 @@ void *explodePacket(char* packet, struct message_s **header_src, char **payload)
 	*payload = malloc(sizeof(char)*payloadSize);
 	packet +=10;
 	strcpy(*payload,packet);
+}
+
+int sendn(int sd, void *buf, int buf_len) {
+	int n_left = buf_len;
+	int n;
+	while (n_left >0) {
+		if((n = send(sd, buf + (buf_len - n_left), n_left, 0)) < 0) {
+			if(errno == EINTR)
+				n = 0;
+			else
+				return -1;
+		} else if (n == 0) {
+			return 0;
+		}
+		n_left -= n;
+	}
+	return buf_len;
+}
+
+int recvn(int sd, void *buf, int buf_len) {
+	int n_left = buf_len;
+	int n;
+	while (n_left >0) {
+		if((n = recv(sd, buf + (buf_len - n_left), n_left, 0)) < 0) {
+			if(errno == EINTR)
+				n = 0;
+			else
+				return -1;
+		} else if (n == 0) {
+			return 0;
+		}
+		n_left -= n;
+	}
+	return buf_len;
 }
 
 /**
@@ -133,70 +175,4 @@ char *readFileToByte(FILE *file){
 // 	int fileNumber = 0;
 // 	char *fileName;
 
-// 	if ((dir = opendir("./data/")) == NULL){
-// 		printf("error: directory can not opened.\n");
-// 	} else {
-// 		fileName = calloc(sizeof(char)*1024,1);
-// 		while (( reader = readdir(dir)) != NULL){
-// 			if((strcmp(reader->d_name,".") == 0) || ((strcmp(reader->d_name,"..") == 0)) ) continue;
-// 			strcat(fileName,reader->d_name);
-// 			strcat(fileName," \n");
-// 			fileNumber++;
-// 		}
-// 		closedir(dir);
-
-// 		if(fileNumber == 0){
-// 			strcpy(fileName,"No file found in the directory.\n");
-// 			return fileName;
-// 		} else {
-// 			char *result = malloc(sizeof(char)*strlen(fileName)+1);
-// 			memcpy(result,fileName,strlen(fileName));
-
-// 			free(fileName);
-// 			return result;
-// 		}
-		
-// 	}
-// }
-
-/**
-// Network
-**/
-void bindAndListen(int fd, struct sockaddr_in *addr){
-	if(bind(fd, (struct sockaddr *) addr, sizeof(struct sockaddr_in)) == -1)
-	{
-		perror("bind()");
-		exit(1);
-	}
-
-	// Switch to listen mode by invoking listen()
-
-	if( listen(fd, 1024) == -1 )
-	{
-		perror("listen()");
-		exit(1);
-	}
-}
-
-// void test() {
-
-//   DIR *dp;
-//   struct dirent64 *ep;
-
-//   dp = opendir ("./");
-//   if (dp != NULL)
-//     {
-//       while (ep = readdir (dp))
-//         printf("%s\n", ep->d_name);
-//       (void) closedir (dp);
-//     }
-//   else
-//     perror ("Couldn't open the directory");
-
-// }
-
-// int main(int argc, char **argv) {
-// 	test();
-
-// 	exit(0);
-// }
+// 	if ((dir = opendir("./data/"))

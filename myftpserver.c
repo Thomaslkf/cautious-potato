@@ -42,7 +42,7 @@ void get_reply(int fd, char *fileName){
 		fclose(file);
 
 		header = createHeader(FILE_DATA,HEADER_SIZE + fs);
-		sendPacket(fd, header, payload, fs);
+		sendPacketWithFile(fd, header, payload, fs);
 		free(header);
 		free(path);
 
@@ -56,9 +56,9 @@ void get_reply(int fd, char *fileName){
 
 void list_reply(int fd, char *list){
 	// LIST_REQUEST
-	struct message_s *header = createHeader(LIST_REPLY,HEADER_SIZE + strlen(list));
+	struct message_s *header = createHeader(LIST_REPLY,HEADER_SIZE + strlen(list) + 1);
 	printf("Replying Directory to Client...\n");
-	sendPacket(fd, header, list, strlen(list));
+	sendPacket(fd, header, list, strlen(list)+1);
 	free(header);
 }
 
@@ -77,8 +77,11 @@ void put_storeFile(int fd, char *fileName){
 
 	// Receive payload
 	int payload_Size = header->length - HEADER_SIZE;
+	// printf("File Size: %d\n", payload_Size);
 	char *payload = malloc(sizeof(char)*payload_Size);
-	count = recv(fd,payload,payload_Size,0);
+	// printf("located\n");
+	count = recvn(fd,payload,payload_Size);
+	// printf("Recieved: %d\n", count);
 	if(count != payload_Size)
 	{
 		perror("Error during deciphering payload...");
@@ -140,6 +143,7 @@ void *child_function(void *args) {
 		payload_Size = header->length - HEADER_SIZE;
 		// printf("payload_Size %d\n",payload_Size);
 		payload = malloc(sizeof(char)*payload_Size);
+		// payload[sizeof(char)*payload_Size] = '\0';
 		count = recv(accept_fd,payload,payload_Size,0);
 		if(count != payload_Size)
 		{
@@ -168,6 +172,7 @@ void *child_function(void *args) {
 
 	close(accept_fd);	// Time to shut up.
 	free(header);
+	// free(payload);
 	thread_ava[thread_num].in_use = 0;
   	pthread_exit(NULL);
 }
