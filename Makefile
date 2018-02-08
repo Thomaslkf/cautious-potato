@@ -1,10 +1,13 @@
-CC = gcc
-LIB = myftp.c
+all: 
+	@if [ "`uname -s`" = "Linux" ] ; then \
+		make -f Makefile.linux ; \
+	else \
+		make -f Makefile.solaris ; \
+	fi
 
-all: server client
-
-server: ${LIB} myftpserver.c
-		${CC} -o server myftpserver.c ${LIB}
-
-client:	${LIB} myftpclient.c
-		${CC} -o client myftpclient.c ${LIB} 
+clean: 
+	@if [ "`uname -s`" = "Linux" ] ; then \
+		make clean -f Makefile.linux ; \
+	else \
+		make clean -f Makefile.solaris ; \
+	fi
